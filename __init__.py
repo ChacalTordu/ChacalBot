@@ -16,17 +16,18 @@ intents.message_content = True #v2
 # Initialiser le bot avec les configurations lues
 bot = commands.Bot(command_prefix=config['command_prefix'], intents=intents)
 
-# Charger les extensions (cogs) pour le bot
-bot.load_extension('participant')
+# Charger les commandes personnalisées
+bot.load_extension('cog_listing')
 
 # Événement de connexion du bot Discord
 @bot.event
 async def on_ready():
     print(f'Connecté en tant que {bot.user.name} ({bot.user.id})')
 
+# Commande personnalisée "chacal"
 @bot.command()
-async def test(ctx):
-    await ctx.send("Test reussi")
+async def chacal(ctx):
+    await ctx.send("Chacal présent")
 
 # Lancer le bot Discord avec le token d'identification
 bot.run(config['bot_token'])
