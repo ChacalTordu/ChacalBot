@@ -14,6 +14,11 @@ intents = discord.Intents.all()
 # Initialiser le bot avec les configurations lues
 bot = commands.Bot(command_prefix=config['command_prefix'], intents=intents)
 
+# Événement de connexion du bot Discord
+@bot.event
+async def on_ready():
+    print(f'Connecté en tant que {bot.user.name} ({bot.user.id})')
+
 async def load_cogs():
     for file in os.listdir('./cogs'):
         if file.endswith('.py'):
