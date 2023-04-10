@@ -26,5 +26,38 @@ async def on_ready():
 async def chacal(ctx):
     await ctx.send("Chacal présent")
 
+@bot.command()
+async def creetorunoi(ctx):
+    await ctx.send("Veuillez entrer le nom du tournoi : ")
+    response = await bot.wait_for('message', check=lambda message: message.author == ctx.author)
+
+    tournoi_nom = response.content
+
+    await ctx.send("Veuillez entrer la date et l'heure du tournoi (format : dd/mm/yyyy hh:mm) : ")
+    response = await bot.wait_for('message', check=lambda message: message.author == ctx.author)
+
+    tournoi_date = response.content
+
+    await ctx.send("Veuillez entrer le nombre maximum de participants : ")
+    response = await bot.wait_for('message', check=lambda message: message.author == ctx.author)
+
+    tournoi_max_participants = int(response.content)
+
+    await ctx.send("Tournoi créé : " + tournoi_nom + " le " + tournoi_date + " avec un maximum de " + str(tournoi_max_participants) + " participants.")
+    
+    # Créez un message récapitulatif des informations entrées par l'utilisateur
+    message_recap = f"Tournoi créé : {tournoi_nom} le {tournoi_date} avec un maximum de {tournoi_max_participants} participants."
+
+    await ctx.send(message_recap)
+
+# Définit une commande d'aide pour le bot
+@bot.command()
+async def help(ctx):
+    commands_list = []
+    for command in bot.commands:
+        commands_list.append(f"{command.name} - {command.help}")
+    help_message = "Voici les commandes disponibles :\n" + "\n".join(commands_list)
+    await ctx.send(help_message)
+    
 # Lancer le bot Discord avec le token d'identification
 bot.run(config['bot_token'])
