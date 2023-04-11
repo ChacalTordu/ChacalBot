@@ -48,9 +48,12 @@ class Tournament(commands.Cog):
             await ctx.send("Vous avez déjà créé un tournoi.")
             return
 
-        # Proposition de choix pour l'utilisateur
-        proposition = "\n".join([f"{i+1}. {self.choix[i]}" for i in range(len(self.choix))]) # Modification : utiliser la liste des choix de jeu
-        await ctx.send(f"Veuillez choisir une option pour le tournoi en tapant le numéro correspondant :\n{proposition}")
+        if self.choix == 0 :
+            await ctx.send("Veuillez rentrer au minimum un jeu dans la liste de choix de jeu grâce à la commande 'ajouter_jeu'")
+        else :
+            # Proposition de choix pour l'utilisateur
+            proposition = "\n".join([f"{i+1}. {self.choix[i]}" for i in range(len(self.choix))]) # Modification : utiliser la liste des choix de jeu
+            await ctx.send(f"Veuillez choisir une option pour le tournoi en tapant le numéro correspondant :\n{proposition}")
 
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel
