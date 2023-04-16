@@ -54,7 +54,7 @@ class Tournament(commands.Cog):
             if ctx.author in tournoi["participants"]:
                 await ctx.send("Vous participez déjà à ce tournoi.")
                 return
-            if tournoi["etat"] == "En cours":
+            if tournoi.get('etat') == 'En cours':
                 await ctx.send("Vous ne pouvez pas rejoindre un tournoi en cours.")
                 return
             tournoi["participants"].append(ctx.author)
@@ -88,7 +88,7 @@ class Tournament(commands.Cog):
         try:
             reponse = await self.bot.wait_for('message', check=check, timeout=60.0)
             choix_utilisateur = int(reponse.content) - 1
-            tournoi = {"organisateur": ctx.author, "option": self.choix[choix_utilisateur], "participants": []}
+            tournoi = {"organisateur": ctx.author, "option": self.choix[choix_utilisateur], "participants": [], "etat": "En construction"}
             TOURNOIS.append(tournoi)
             # Embed message résumant le tournoi
             embed = discord.Embed(title=f"Tournoi créé par {ctx.author.name}", description=f"Jeu choisie : {self.choix[choix_utilisateur]}", color=0xFADE13)
@@ -104,7 +104,7 @@ class Tournament(commands.Cog):
     async def quitter_tournoi(self, ctx, index: int):
         if index >= 0 and index < len(TOURNOIS):
             participants = TOURNOIS[index]["participants"]
-            if TOURNOIS["etat"] == "En cours":
+            if TOURNOIS[index]["etat"] == "En cours":
                 await ctx.send("Vous ne pouvez pas quitter un tournoi en cours, vous pouvez seulement abandonner.")
                 return
             if ctx.author in participants:
