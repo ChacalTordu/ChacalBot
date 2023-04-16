@@ -7,7 +7,6 @@ Le projet est encore en cours de construction.
 **Fonctionnalités**
 Créer des tournois
 Rejoindre/Quitter des tournois
-Envoyer des messages d'aide
 
 **Installation**
 Clonez ce dépôt Git sur votre ordinateur
