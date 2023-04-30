@@ -25,6 +25,8 @@ class Tournament(commands.Cog):
         self.bot = bot
         self._last_member = None
         self.choix = ['Rocket League','League Of Legend','TFT', 'Valorant']
+        self.format_tournoi = ['SoloGaming' , 'MultiGaming']
+        
 # -------------------------------------------------------------------------------------------------
 #   AJOUTER JEU
 # -------------------------------------------------------------------------------------------------    
@@ -71,6 +73,8 @@ class Tournament(commands.Cog):
     @commands.command(description = "Creer un tournoi")
     @commands.has_role(TOURNOI_ROLE)
     async def creer_tournoi(self, ctx):
+        channel = discord.utils.get(ctx.guild.channels, name='tournois') # Les recaps sont envoyés sur un autre channel
+
         if any(tournoi["organisateur"] == ctx.author for tournoi in TOURNOIS):
             await ctx.send("Vous avez déjà créé un tournoi.")
             return
@@ -78,25 +82,90 @@ class Tournament(commands.Cog):
             await ctx.send("Veuillez rentrer au minimum un jeu dans la liste de choix de jeu grâce à la commande 'ajouter_jeu'")
         else :
             # Proposition de choix pour l'utilisateur
-            proposition = "\n".join([f"{i+1}. {self.choix[i]}" for i in range(len(self.choix))]) # Modification : utiliser la liste des choix de jeu
-            await ctx.send(f"Veuillez choisir une option pour le tournoi en tapant le numéro correspondant :\n{proposition}")
+            format_tournoi = "\n".join([f"{i+1}. {self.format_tournoi[i]}" for i in range(len(self.format_tournoi))])
+            await ctx.send(f"Veuillez choisir un format pour le tournoi en tapant le numéro correspondant :\n{format_tournoi}")
 
         def check(m):
             return m.author == ctx.author and m.channel == ctx.channel
 
         # Attente de la réponse de l'utilisateur
         try:
-            reponse = await self.bot.wait_for('message', check=check, timeout=60.0)
+            reponse = await self.bot.wait_for('message', check=check, timeout=120.0)
             choix_utilisateur = int(reponse.content) - 1
-            tournoi = {"organisateur": ctx.author, "option": self.choix[choix_utilisateur], "participants": [], "etat": "En construction"}
+            #tournoi = {"organisateur": ctx.author, "option": self.choix[choix_utilisateur], "participants": [], "etat": "En construction"}
+            tournoi = {"organisateur": ctx.author, "option": self.format_tournoi[choix_utilisateur], "participants": [], "etat": "En construction"}
             TOURNOIS.append(tournoi)
+
+            #MONOGAMING
+            if (self.format_tournoi[choix_utilisateur]==1):
+                # Attente de la réponse de l'utilisateur pour définir la date et l'heure du tournoi
+                proposition = "\n".join([f"{i+1}. {self.choix[i]}" for i in range(len(self.choix))]) 
+                await ctx.send(f"Veuillez choisir le jeu pour le tournoi en tapant le numéro correspondant :\n{proposition}")
+                def check(m):
+                    return m.author == ctx.author and m.channel == ctx.channel
+                try:
+                    reponse = await self.bot.wait_for('message', check=check, timeout=120.0)
+                    jeu_tournoi = reponse.content
+                except asyncio.TimeoutError:
+                    await ctx.send("Temps écoulé, veuillez réessayer.")
+
+            #MULTIGAMING
+            else:
+                # Afficher la liste des jeux et attendre la réaction de l'utilisateur
+                proposition = "\n".join([f"{i+1}. {self.choix[i]}" for i in range(len(self.choix))])
+                msg = await ctx.send(f"Veuillez ajouter les jeux pour le tournoi en réagissant avec les émojis correspondants :\n{proposition}")
+                emojis = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+
+                for i in range(len(self.choix)):
+                    await msg.add_reaction(emojis[i])
+                await msg.add_reaction("✅")
+
+                def checkEmoji(reaction, user):
+                    return ctx.author == user and str(reaction.emoji) in emojis + ["✅"] and msg.id == reaction.message.id
+
+                # Attendre la réaction de l'utilisateur
+                reaction, user = await self.bot.wait_for("reaction_add", check=checkEmoji)
+
+                # Créer une liste pour stocker les indices des émojis sélectionnés
+                jeux_selectionnes = []
+
+                while str(reaction.emoji) != "✅":
+                    # Ajouter l'indice de l'emoji sélectionné à la liste jeux_selectionnes
+                    index = emojis.index(str(reaction.emoji))
+                    jeux_selectionnes.append(self.choix[index])
+
+                    # Attendre la prochaine réaction de l'utilisateur
+                    reaction, user = await self.bot.wait_for("reaction_add", check=checkEmoji)
+
+                # Afficher les indices des emojis sélectionnés
+                await ctx.send(f"{ctx.author} a sélectionné les jeux suivants : {', '.join(map(str, jeux_selectionnes))}.")
+                    
+            # Attente de la réponse de l'utilisateur pour définir la date et l'heure du tournoi
+            await ctx.send("Veuillez entrer la date et l'heure du tournoi au format jj/mm/aaaa hh:mm")
+            def check(m):
+                return m.author == ctx.author and m.channel == ctx.channel
+            try:
+                reponse = await self.bot.wait_for('message', check=check, timeout=120.0)
+                date_et_heure = reponse.content
+            except asyncio.TimeoutError:
+                await ctx.send("Temps écoulé, veuillez réessayer.")
+
             # Embed message résumant le tournoi
-            embed = discord.Embed(title=f"Tournoi créé par {ctx.author.name}", description=f"Jeu choisie : {self.choix[choix_utilisateur]}", color=0xFADE13)
-            embed.add_field(name="Participants", value="Aucun participant pour le moment (Le créateur n'ai pas inclu dans son tournoi).")
-            embed.add_field(name="Indice du tournoi", value=str(len(TOURNOIS)-1))
-            await ctx.send(embed=embed)
+            embed1 = discord.Embed(title=f"Tournoi créé par {ctx.author.name}", description=f"Format du tournoi : {self.format_tournoi[choix_utilisateur]}", color=0xFADE13)
+            embed1.add_field(name="Participants", value="Aucun participant pour le moment")
+            embed1.add_field(name="Indice du tournoi", value=str(len(TOURNOIS)-1))
+            await channel.send(embed=embed1)
+
+            # Embed message des informations du tournoi
+            embed2 = discord.Embed(title=f"Informations du tournoi", color=0xFADE13)
+            embed2.add_field(name="Date et heure", value=date_et_heure)
+            embed2.add_field(name="Jeu choisi", value=f"{', '.join(jeux_selectionnes)}")
+            embed2.set_footer(text="Récompense : Non défini pour le moment.")
+            await channel.send(embed=embed2)
+
         except asyncio.TimeoutError:
             await ctx.send("Temps écoulé, veuillez réessayer.")
+
 # -------------------------------------------------------------------------------------------------
 #   QUITTER TOURNOI
 # -------------------------------------------------------------------------------------------------
