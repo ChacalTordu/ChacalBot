@@ -95,9 +95,9 @@ class Tournament(commands.Cog):
             #tournoi = {"organisateur": ctx.author, "option": self.choix[choix_utilisateur], "participants": [], "etat": "En construction"}
             tournoi = {"organisateur": ctx.author, "option": self.format_tournoi[choix_utilisateur], "participants": [], "etat": "En construction"}
             TOURNOIS.append(tournoi)
-
+            jeux_selectionnes = [] 
             #MONOGAMING
-            if (self.format_tournoi[choix_utilisateur]==1):
+            if reponse.content=="1":
                 # Attente de la réponse de l'utilisateur pour définir la date et l'heure du tournoi
                 proposition = "\n".join([f"{i+1}. {self.choix[i]}" for i in range(len(self.choix))]) 
                 await ctx.send(f"Veuillez choisir le jeu pour le tournoi en tapant le numéro correspondant :\n{proposition}")
@@ -105,12 +105,12 @@ class Tournament(commands.Cog):
                     return m.author == ctx.author and m.channel == ctx.channel
                 try:
                     reponse = await self.bot.wait_for('message', check=check, timeout=120.0)
-                    jeu_tournoi = reponse.content
+                    jeux_selectionnes = reponse.content
                 except asyncio.TimeoutError:
                     await ctx.send("Temps écoulé, veuillez réessayer.")
 
             #MULTIGAMING
-            else:
+            elif reponse.content=="2":
                 # Afficher la liste des jeux et attendre la réaction de l'utilisateur
                 proposition = "\n".join([f"{i+1}. {self.choix[i]}" for i in range(len(self.choix))])
                 msg = await ctx.send(f"Veuillez ajouter les jeux pour le tournoi en réagissant avec les émojis correspondants :\n{proposition}")
@@ -124,11 +124,8 @@ class Tournament(commands.Cog):
                     return ctx.author == user and str(reaction.emoji) in emojis + ["✅"] and msg.id == reaction.message.id
 
                 # Attendre la réaction de l'utilisateur
-                reaction, user = await self.bot.wait_for("reaction_add", check=checkEmoji)
-
-                # Créer une liste pour stocker les indices des émojis sélectionnés
-                jeux_selectionnes = []
-
+                reaction , user = await self.bot.wait_for("reaction_add", check=checkEmoji)
+                
                 while str(reaction.emoji) != "✅":
                     # Ajouter l'indice de l'emoji sélectionné à la liste jeux_selectionnes
                     index = emojis.index(str(reaction.emoji))
@@ -139,7 +136,9 @@ class Tournament(commands.Cog):
 
                 # Afficher les indices des emojis sélectionnés
                 await ctx.send(f"{ctx.author} a sélectionné les jeux suivants : {', '.join(map(str, jeux_selectionnes))}.")
-                    
+            else:
+                await ctx.send (f"Index non valide. Vous avez écrit {reponse.content}. Veuillez reesayer")
+                return     
             # Attente de la réponse de l'utilisateur pour définir la date et l'heure du tournoi
             await ctx.send("Veuillez entrer la date et l'heure du tournoi au format jj/mm/aaaa hh:mm")
             def check(m):
